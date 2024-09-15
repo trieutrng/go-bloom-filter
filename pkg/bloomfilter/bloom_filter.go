@@ -12,8 +12,9 @@ import (
 const FALSE_POSITIVE_RATE = 0.000001
 
 type BloomFilter interface {
-	Add(value interface{})
+	Add(value interface{}) (bool, error)
 	MightContain(value interface{}) bool
+	Size() int64
 }
 
 type bloomFilterImpl struct {
@@ -23,8 +24,8 @@ type bloomFilterImpl struct {
 }
 
 /*
-	 params
-		- cap: expected capacity of data
+params
+- cap: expected capacity of data
 */
 func New(cap int64) BloomFilter {
 	size := getFilterSize(cap)
@@ -35,21 +36,32 @@ func New(cap int64) BloomFilter {
 	}
 }
 
-func (bf *bloomFilterImpl) Add(value interface{}) {
+func (bf *bloomFilterImpl) Add(value interface{}) (bool, error) {
 	for _, hashFunc := range bf.hashChain {
-		index := hashing(value, hashFunc) % bf.size
+		index := getIndex(value, hashFunc, bf.size)
 		bf.filter[index] = true
 	}
+	return true, nil
 }
 
 func (bf *bloomFilterImpl) MightContain(value interface{}) bool {
 	for _, hashFunc := range bf.hashChain {
-		index := hashing(value, hashFunc)
+		index := getIndex(value, hashFunc, bf.size)
 		if !bf.filter[index] {
 			return false
 		}
 	}
 	return true
+}
+
+func (bf *bloomFilterImpl) Size() int64 {
+	return bf.size
+}
+
+func getIndex(value interface{}, h hash.Hash, size int64) int64 {
+	hashed := hashing(value, h)
+	mod := math.Abs(float64(hashed))
+	return int64(mod) % size
 }
 
 // this fomular is referenced from https://redis.io/docs/latest/develop/data-types/probabilistic/bloom-filter/
@@ -70,8 +82,7 @@ func hashing(value interface{}, hashFunc hash.Hash) int64 {
 func getHashChain() []hash.Hash {
 	return []hash.Hash{
 		fnv.New32(),
-		fnv.New32(),
-		fnv.New32(),
+		fnv.New32a(),
 	}
 }
 
