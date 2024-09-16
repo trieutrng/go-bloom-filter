@@ -4,15 +4,27 @@ import (
 	"testing"
 )
 
-func TestNew(t *testing.T) {
-	var cap int64 = 10000
-	bf := New(cap)
+type PairI64I64 struct {
+	first, second int64
+}
 
-	// verify filter size
-	expectedSize := int64(190000)
-	if bf.Size() != expectedSize {
-		t.Fatalf(`bloomfilter.New(): expected bf.Size() is %d, but actual is %d`,
-			expectedSize, bf.Size())
+func TestNew(t *testing.T) {
+	// input - expected
+	caps := []*PairI64I64{
+		{10000, 190000},
+		{20000, 380000},
+		{5400, 102600},
+	}
+
+	for _, p := range caps {
+		cap, expectedSize := p.first, p.second
+		bf := New(cap)
+
+		// verify filter size
+		if bf.Size() != expectedSize {
+			t.Fatalf(`bloomfilter.New(): expected bf.Size() is %d, but actual is %d`,
+				expectedSize, bf.Size())
+		}
 	}
 }
 
