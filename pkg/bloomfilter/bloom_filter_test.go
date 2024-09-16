@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-type PairI64I64 struct {
+type pairI64I64 struct {
 	first, second int64
 }
 
 func TestNew(t *testing.T) {
 	// input - expected
-	caps := []*PairI64I64{
+	caps := []*pairI64I64{
 		{10000, 190000},
 		{20000, 380000},
 		{5400, 102600},
